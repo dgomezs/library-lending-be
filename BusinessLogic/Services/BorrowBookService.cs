@@ -17,17 +17,29 @@ namespace BusinessLayer.Services
             this.memberService = memberService;
             this.bookCopyRepository = bookCopyRepository;
         }
-
-
+        
         public async Task<Guid> BorrowBook(Guid memberId, Guid bookId)
         {
-            var memberIsRegistered = await this.memberService.MemberIsRegistered(memberId);
+            var availableCopies = await bookCopyRepository.GetAvailableCopiesByBookId(bookId);
+
+            await CheckIfMemberCanBorrowBook(memberId, bookId, availableCopies);
+
+            var copyToBorrow = SelectCopyToBorrow(availableCopies);
+
+            copyToBorrow.LoanTo(memberId);
+
+            await bookCopyRepository.SaveBookCopy(copyToBorrow);
+
+            return copyToBorrow.Id;
+        }
+
+        private async Task CheckIfMemberCanBorrowBook(Guid memberId, Guid bookId, List<BookCopy> availableCopies)
+        {
+            var memberIsRegistered = await memberService.MemberIsRegistered(memberId);
             if (!memberIsRegistered)
             {
                 throw new MemberNotRegisteredException($"The member with id ${memberId.ToString()} is not registered");
             }
-
-            var availableCopies = await bookCopyRepository.GetAvailableCopiesByBookId(bookId);
 
             if (!availableCopies.Any())
             {
@@ -41,14 +53,6 @@ namespace BusinessLayer.Services
                 throw new MaxBorrowedBooksExceededException(
                     $"Member ${memberId} has already borrowed ${Constants.MaxBorrowedBooks} books");
             }
-
-            var copyToBorrow = SelectCopyToBorrow(availableCopies);
-
-            copyToBorrow.LoanTo(memberId);
-
-            await this.bookCopyRepository.SaveBookCopy(copyToBorrow);
-
-            return copyToBorrow.Id;
         }
 
         private BookCopy SelectCopyToBorrow(List<BookCopy> availableCopies)
