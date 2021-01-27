@@ -9,7 +9,7 @@ using BusinessLayer.Services;
 using Moq;
 using Xunit;
 
-namespace BusinessLayer.Tests
+namespace BusinessLogic.Tests
 {
     public class BorrowBookTest
     {
@@ -19,11 +19,10 @@ namespace BusinessLayer.Tests
 
         public BorrowBookTest()
         {
-            this.memberService = new Mock<IMemberService>();
-            this.bookCopyRepository = new BookCopyInMemoryRepository();
-            this.borrowBookService = new BorrowBookService(memberService.Object, bookCopyRepository);
+            memberService = new Mock<IMemberService>();
+            bookCopyRepository = new BookCopyInMemoryRepository();
+            borrowBookService = new BorrowBookService(memberService.Object, bookCopyRepository);
         }
-
 
         [Theory]
         [InlineData(2)]
@@ -143,7 +142,7 @@ namespace BusinessLayer.Tests
             foreach (var bookCopy in currentBorrowedBooks)
             {
                 bookCopy.LoanTo(memberId);
-                await this.bookCopyRepository.SaveBookCopy(bookCopy);
+                await bookCopyRepository.SaveBookCopy(bookCopy);
             }
         }
 
@@ -169,7 +168,7 @@ namespace BusinessLayer.Tests
 
         private async Task VerifyNumberOfCopiesAvailableForBook(Guid bookIsbn, int numberOfAvailableCopies)
         {
-            var availableCopiesByBookId = await this.bookCopyRepository.GetAvailableCopiesByBookId(bookIsbn);
+            var availableCopiesByBookId = await bookCopyRepository.GetAvailableCopiesByBookId(bookIsbn);
             Assert.Equal(numberOfAvailableCopies, availableCopiesByBookId.Count);
         }
 

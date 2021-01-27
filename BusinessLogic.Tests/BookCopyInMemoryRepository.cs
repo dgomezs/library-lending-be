@@ -5,11 +5,11 @@ using System.Threading.Tasks;
 using BusinessLayer.Entities;
 using BusinessLayer.Services;
 
-namespace BusinessLayer.Tests
+namespace BusinessLogic.Tests
 {
     public class BookCopyInMemoryRepository : IBookCopyRepository
     {
-        private Dictionary<Guid, BookCopy> catalog = new Dictionary<Guid, BookCopy>();
+        private readonly Dictionary<Guid, BookCopy> catalog = new Dictionary<Guid, BookCopy>();
 
         public Task<List<BookCopy>> GetBorrowedBookCopiesByMember(Guid memberId)
         {
