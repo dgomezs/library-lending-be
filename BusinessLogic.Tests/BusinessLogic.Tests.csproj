@@ -25,7 +25,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\BusinessLogic\BusinessLayer.csproj" />
-    <ProjectReference Include="..\Library-lending.Business-logic\BusinessLayer.csproj" />
   </ItemGroup>
 
 </Project>
