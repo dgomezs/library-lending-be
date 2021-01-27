@@ -21,10 +21,7 @@ namespace BusinessLogic.Tests
         {
             var existsCopy = catalog.ContainsKey(bookCopy.Id);
 
-            if (existsCopy)
-            {
-                catalog.Remove(bookCopy.Id);
-            }
+            if (existsCopy) catalog.Remove(bookCopy.Id);
 
             catalog.Add(bookCopy.Id, bookCopy);
             return Task.CompletedTask;

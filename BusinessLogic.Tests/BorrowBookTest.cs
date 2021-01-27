@@ -13,9 +13,9 @@ namespace BusinessLogic.Tests
 {
     public class BorrowBookTest
     {
+        private readonly IBookCopyRepository bookCopyRepository;
         private readonly IBorrowBookService borrowBookService;
         private readonly Mock<IMemberService> memberService;
-        private readonly IBookCopyRepository bookCopyRepository;
 
         public BorrowBookTest()
         {
@@ -43,9 +43,8 @@ namespace BusinessLogic.Tests
             var bookCopyId = await BorrowBook(memberId, bookIsbn);
 
             // Assert
-            var borrowedBooks = await GetBorrowedBooksByMember(memberId);
-            VerifyBookCopyIsInMemberBorrowedList(borrowedBooks, bookCopyId);
-            VerifyBorrowedBookByMemberSizeIs(1, borrowedBooks);
+            await VerifyBookCopyIsInMemberBorrowedList(memberId, bookCopyId);
+            await VerifyBorrowedBookByMemberSizeIs(1, memberId);
             await VerifyNumberOfCopiesAvailableForBook(bookIsbn, numberOfAvailableCopies - 1);
         }
 
@@ -87,11 +86,10 @@ namespace BusinessLogic.Tests
             var memberId = GenerateRandomMemberId();
             var bookIsbn = GenerateRandomBookIsbn();
             var currentBorrowedBooks = new List<BookCopy>();
-            var availableCopies = new List<BookCopy>();
 
             // Arrange
             MemberIsRegistered(memberId);
-            await BookHasAvailableCopies(bookIsbn, availableCopies);
+            await BookHasNoAvailableCopies(bookIsbn);
             await MemberHasNumberBorrowedBooks(memberId, currentBorrowedBooks);
 
 
@@ -99,14 +97,21 @@ namespace BusinessLogic.Tests
             await Assert.ThrowsAsync<NoAvailableBookCopiesException>(() => BorrowBook(memberId, bookIsbn));
         }
 
-
-        private static void VerifyBorrowedBookByMemberSizeIs(int numberOfBooks, List<BookCopy> borrowedBooks)
+        private async Task BookHasNoAvailableCopies(Guid bookIsbn)
         {
+            await BookHasAvailableCopies(bookIsbn, new List<BookCopy>());
+        }
+
+
+        private async Task VerifyBorrowedBookByMemberSizeIs(int numberOfBooks, Guid memberId)
+        {
+            var borrowedBooks = await GetBorrowedBooksByMember(memberId);
             Assert.Equal(numberOfBooks, borrowedBooks.Count);
         }
 
-        private static void VerifyBookCopyIsInMemberBorrowedList(List<BookCopy> borrowedBooks, Guid bookCopyId)
+        private async Task VerifyBookCopyIsInMemberBorrowedList(Guid memberId, Guid bookCopyId)
         {
+            var borrowedBooks = await GetBorrowedBooksByMember(memberId);
             Assert.Contains(borrowedBooks, b => b.Id.Equals(bookCopyId));
         }
 
@@ -175,7 +180,7 @@ namespace BusinessLogic.Tests
 
         private async Task<List<BookCopy>> GetBorrowedBooksByMember(Guid memberId)
         {
-            return await borrowBookService.GetBorrowedBookCopiesByMember(memberId);
+            return await bookCopyRepository.GetBorrowedBookCopiesByMember(memberId);
         }
     }
 }

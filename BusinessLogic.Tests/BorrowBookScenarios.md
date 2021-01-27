@@ -1,5 +1,8 @@
 ﻿# Feature: Borrow book
 
+
+## Examples
+- A valid member has no borrowed books and borrows "Harry potter" that has available copies
 ## Scenario: Successfully borrow a book
 
 ### Arrange:

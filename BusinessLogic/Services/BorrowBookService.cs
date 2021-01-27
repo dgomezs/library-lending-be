@@ -9,15 +9,15 @@ namespace BusinessLayer.Services
 {
     public class BorrowBookService : IBorrowBookService
     {
-        private readonly IMemberService memberService;
         private readonly IBookCopyRepository bookCopyRepository;
+        private readonly IMemberService memberService;
 
         public BorrowBookService(IMemberService memberService, IBookCopyRepository bookCopyRepository)
         {
             this.memberService = memberService;
             this.bookCopyRepository = bookCopyRepository;
         }
-        
+
         public async Task<Guid> BorrowBook(Guid memberId, Guid bookId)
         {
             var availableCopies = await bookCopyRepository.GetAvailableCopiesByBookId(bookId);
@@ -37,22 +37,17 @@ namespace BusinessLayer.Services
         {
             var memberIsRegistered = await memberService.MemberIsRegistered(memberId);
             if (!memberIsRegistered)
-            {
-                throw new MemberNotRegisteredException($"The member with id ${memberId.ToString()} is not registered");
-            }
+                throw new MemberNotRegisteredException(
+                    $"Member couldn't borrow book ${bookId}. The member with id ${memberId.ToString()} is not registered");
 
             if (!availableCopies.Any())
-            {
                 throw new NoAvailableBookCopiesException($"The book ${bookId} has no available copies");
-            }
 
             var borrowedBooksByMember = await GetBorrowedBookCopiesByMember(memberId);
 
             if (borrowedBooksByMember.Count >= Constants.MaxBorrowedBooks)
-            {
                 throw new MaxBorrowedBooksExceededException(
                     $"Member ${memberId} has already borrowed ${Constants.MaxBorrowedBooks} books");
-            }
         }
 
         private BookCopy SelectCopyToBorrow(List<BookCopy> availableCopies)
@@ -61,7 +56,7 @@ namespace BusinessLayer.Services
             return availableCopies[0];
         }
 
-        public Task<List<BookCopy>> GetBorrowedBookCopiesByMember(Guid memberId)
+        private Task<List<BookCopy>> GetBorrowedBookCopiesByMember(Guid memberId)
         {
             return bookCopyRepository.GetBorrowedBookCopiesByMember(memberId);
         }
