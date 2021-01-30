@@ -3,13 +3,11 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using BusinessLayer.Entities;
 
-namespace BusinessLayer.Services
+namespace BusinessLayer.Services.BorrowBook
 {
-    public interface IBookCopyRepository
+    public interface IBorrowBookService
     {
+        Task<Guid> BorrowBook(Guid memberId, Guid bookId);
         Task<List<BookCopy>> GetBorrowedBookCopiesByMember(Guid memberId);
-        Task SaveBookCopy(BookCopy bookCopy);
-
-        Task<List<BookCopy>> GetAvailableCopiesByBookId(Guid bookIsbn);
     }
 }

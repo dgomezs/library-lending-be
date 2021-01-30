@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Threading.Tasks;
 
-namespace BusinessLayer.Services
+namespace BusinessLayer.Services.Member
 {
     public interface IMemberService
     {

@@ -3,11 +3,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using BusinessLayer.Entities;
-using BusinessLayer.Services;
+using BusinessLayer.Repositories;
 
 namespace BusinessLogic.Tests
 {
-    public class BookCopyInMemoryRepository : IBookCopyRepository
+    public class FakeBookCopyRepository : IBookCopyRepository
     {
         private readonly Dictionary<Guid, BookCopy> catalog = new Dictionary<Guid, BookCopy>();
 

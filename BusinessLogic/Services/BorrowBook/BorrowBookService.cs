@@ -4,8 +4,10 @@ using System.Linq;
 using System.Threading.Tasks;
 using BusinessLayer.Entities;
 using BusinessLayer.Exceptions;
+using BusinessLayer.Repositories;
+using BusinessLayer.Services.Member;
 
-namespace BusinessLayer.Services
+namespace BusinessLayer.Services.BorrowBook
 {
     public class BorrowBookService : IBorrowBookService
     {
@@ -33,6 +35,11 @@ namespace BusinessLayer.Services
             return copyToBorrow.Id;
         }
 
+        public Task<List<BookCopy>> GetBorrowedBookCopiesByMember(Guid memberId)
+        {
+            return bookCopyRepository.GetBorrowedBookCopiesByMember(memberId);
+        }
+
         private async Task CheckIfMemberCanBorrowBook(Guid memberId, Guid bookId, List<BookCopy> availableCopies)
         {
             var memberIsRegistered = await memberService.MemberIsRegistered(memberId);
@@ -54,11 +61,6 @@ namespace BusinessLayer.Services
         {
             // no specific algorithm to select which copy to borrow just pick one
             return availableCopies[0];
-        }
-
-        private Task<List<BookCopy>> GetBorrowedBookCopiesByMember(Guid memberId)
-        {
-            return bookCopyRepository.GetBorrowedBookCopiesByMember(memberId);
         }
     }
 }

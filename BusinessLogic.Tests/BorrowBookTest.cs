@@ -5,7 +5,11 @@ using System.Threading.Tasks;
 using Bogus;
 using BusinessLayer.Entities;
 using BusinessLayer.Exceptions;
+using BusinessLayer.Repositories;
 using BusinessLayer.Services;
+using BusinessLayer.Services.BorrowBook;
+using BusinessLayer.Services.Catalog;
+using BusinessLayer.Services.Member;
 using Moq;
 using Xunit;
 
@@ -15,13 +19,15 @@ namespace BusinessLogic.Tests
     {
         private readonly IBookCopyRepository bookCopyRepository;
         private readonly IBorrowBookService borrowBookService;
+        private readonly ICatalogService catalogService;
         private readonly Mock<IMemberService> memberService;
 
         public BorrowBookTest()
         {
             memberService = new Mock<IMemberService>();
-            bookCopyRepository = new BookCopyInMemoryRepository();
+            bookCopyRepository = new FakeBookCopyRepository();
             borrowBookService = new BorrowBookService(memberService.Object, bookCopyRepository);
+            catalogService = new CatalogService(bookCopyRepository);
         }
 
         [Theory]
@@ -173,14 +179,13 @@ namespace BusinessLogic.Tests
 
         private async Task VerifyNumberOfCopiesAvailableForBook(Guid bookIsbn, int numberOfAvailableCopies)
         {
-            var availableCopiesByBookId = await bookCopyRepository.GetAvailableCopiesByBookId(bookIsbn);
+            var availableCopiesByBookId = await catalogService.GetAvailableCopiesByBookId(bookIsbn);
             Assert.Equal(numberOfAvailableCopies, availableCopiesByBookId.Count);
         }
 
-
         private async Task<List<BookCopy>> GetBorrowedBooksByMember(Guid memberId)
         {
-            return await bookCopyRepository.GetBorrowedBookCopiesByMember(memberId);
+            return await borrowBookService.GetBorrowedBookCopiesByMember(memberId);
         }
     }
 }
