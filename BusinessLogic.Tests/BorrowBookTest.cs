@@ -1,8 +1,6 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
-using Bogus;
 using BusinessLayer.Entities;
 using BusinessLayer.Exceptions;
 using BusinessLayer.Repositories;
@@ -38,7 +36,7 @@ namespace BusinessLogic.Tests
             var memberId = GenerateRandomMemberId();
             var bookIsbn = GenerateRandomBookIsbn();
             var currentBorrowedBooks = new List<BookCopy>();
-            var availableCopies = GenerateRandomAvailableCopies(bookIsbn, numberOfAvailableCopies);
+            var availableCopies = BookCopyMockData.GenerateRandomAvailableCopies(bookIsbn, numberOfAvailableCopies);
 
             // Arrange
             MemberIsRegistered(memberId);
@@ -72,9 +70,10 @@ namespace BusinessLogic.Tests
         {
             var memberId = GenerateRandomMemberId();
             var bookIsbn = GenerateRandomBookIsbn();
-            var currentBorrowedBooks = GenerateRandomAvailableCopies(bookIsbn, Constants.MaxBorrowedBooks);
+            var currentBorrowedBooks =
+                BookCopyMockData.GenerateRandomAvailableCopies(bookIsbn, Constants.MaxBorrowedBooks);
             var numberOfAvailableCopies = 2;
-            var availableCopies = GenerateRandomAvailableCopies(bookIsbn, numberOfAvailableCopies);
+            var availableCopies = BookCopyMockData.GenerateRandomAvailableCopies(bookIsbn, numberOfAvailableCopies);
 
             // Arrange
             MemberIsRegistered(memberId);
@@ -119,16 +118,6 @@ namespace BusinessLogic.Tests
         {
             var borrowedBooks = await GetBorrowedBooksByMember(memberId);
             Assert.Contains(borrowedBooks, b => b.Id.Equals(bookCopyId));
-        }
-
-        private List<BookCopy> GenerateRandomAvailableCopies(Guid bookIsbn, int numberOfAvailableCopies)
-        {
-            var fakeBookCopy = new Faker<BookCopy>()
-                .RuleFor(b => b.Id, b => Guid.NewGuid())
-                .RuleFor(b => b.BookIsbn, bookIsbn);
-
-            return Enumerable.Range(0, numberOfAvailableCopies)
-                .Select(_ => fakeBookCopy.Generate()).ToList();
         }
 
 
