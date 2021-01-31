@@ -8,6 +8,7 @@ using BusinessLayer.Services;
 using BusinessLayer.Services.BorrowBook;
 using BusinessLayer.Services.Catalog;
 using BusinessLayer.Services.Member;
+using Microsoft.EntityFrameworkCore;
 using Moq;
 using Xunit;
 
@@ -22,8 +23,13 @@ namespace BusinessLogic.Tests
 
         public BorrowBookTest()
         {
+            var builder = new DbContextOptionsBuilder<LibraryContext>();
+            builder.UseInMemoryDatabase("library");
+            var libraryContext = new LibraryContext(builder.Options);
+
+            //bookCopyRepository = new FakeBookCopyRepository();
+            bookCopyRepository = new EfBookCopyRepository(libraryContext);
             memberService = new Mock<IMemberService>();
-            bookCopyRepository = new FakeBookCopyRepository();
             borrowBookService = new BorrowBookService(memberService.Object, bookCopyRepository);
             catalogService = new CatalogService(bookCopyRepository);
         }
