@@ -10,14 +10,16 @@ using Xunit;
 
 namespace BusinessLogic.Tests
 {
-    public class BorrowBookInteractionTest
+    public class BorrowBookMemoryDbInRepositoryTest
     {
+        private readonly BookCopyMemoryDb bookCopyMemoryDb;
         private readonly Mock<IBookCopyRepository> bookCopyRepository;
         private readonly IBorrowBookService borrowBookService;
         private readonly Mock<IMemberService> memberService;
 
-        public BorrowBookInteractionTest()
+        public BorrowBookMemoryDbInRepositoryTest()
         {
+            bookCopyMemoryDb = new BookCopyMemoryDb();
             bookCopyRepository = new Mock<IBookCopyRepository>();
             memberService = new Mock<IMemberService>();
             borrowBookService = new BorrowBookService(memberService.Object, bookCopyRepository.Object);
@@ -84,13 +86,15 @@ namespace BusinessLogic.Tests
         private void MemberHasNumberBorrowedBooks(Guid memberId, List<BookCopy> currentBorrowedBooks)
         {
             bookCopyRepository.Setup(m => m.GetBorrowedBookCopiesByMember(memberId))
-                .ReturnsAsync(currentBorrowedBooks);
+                .ReturnsAsync(bookCopyMemoryDb.GetBorrowedBookCopiesByMember(memberId));
         }
 
         private void BookHasAvailableCopies(Guid bookIsbn, List<BookCopy> availableBookCopies)
         {
+            foreach (var availableBookCopy in availableBookCopies) bookCopyMemoryDb.SaveBookCopy(availableBookCopy);
+
             bookCopyRepository.Setup(m => m.GetAvailableCopiesByBookId(bookIsbn))
-                .ReturnsAsync(availableBookCopies);
+                .ReturnsAsync(bookCopyMemoryDb.GetAvailableCopiesByBookId(bookIsbn));
         }
 
         private Guid GenerateRandomBookIsbn()
