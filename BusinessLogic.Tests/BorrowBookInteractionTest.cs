@@ -105,9 +105,14 @@ namespace BusinessLogic.Tests
         private void VerifyBookCopyIsInMemberBorrowedList(Guid memberId, Guid bookIsbn)
         {
             bookCopyRepository.Verify(
-                m => m.UpdateBookCopy(It.Is<BookCopy>(b =>
-                    memberId.Equals(b.BorrowedToMemberId) && bookIsbn.Equals(b.BookIsbn))), Times.Once());
+                m => m.UpdateBookCopy(BookCopyBelongsToMember(memberId, bookIsbn)), Times.Once());
             bookCopyRepository.Verify(m => m.Save(), Times.Once);
+        }
+
+        private static BookCopy BookCopyBelongsToMember(Guid memberId, Guid bookIsbn)
+        {
+            return It.Is<BookCopy>(b =>
+                memberId.Equals(b.BorrowedToMemberId) && bookIsbn.Equals(b.BookIsbn));
         }
 
 
@@ -129,12 +134,14 @@ namespace BusinessLogic.Tests
 
         private void MemberHasNumberBorrowedBooks(Guid memberId, List<BookCopy> currentBorrowedBooks)
         {
-            bookCopyRepository.Setup(m => m.GetBorrowedBookCopiesByMember(memberId)).ReturnsAsync(currentBorrowedBooks);
+            bookCopyRepository.Setup(m => m.GetBorrowedBookCopiesByMember(memberId))
+                .ReturnsAsync(currentBorrowedBooks);
         }
 
         private void BookHasAvailableCopies(Guid bookIsbn, List<BookCopy> availableBookCopies)
         {
-            bookCopyRepository.Setup(m => m.GetAvailableCopiesByBookId(bookIsbn)).ReturnsAsync(availableBookCopies);
+            bookCopyRepository.Setup(m => m.GetAvailableCopiesByBookId(bookIsbn))
+                .ReturnsAsync(availableBookCopies);
         }
 
         private Guid GenerateRandomBookIsbn()
