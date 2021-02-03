@@ -36,36 +36,32 @@ namespace BusinessLogic.Tests
             var availableCopies = BookCopyMockData.GenerateRandomAvailableCopies(bookIsbn, numberOfAvailableCopies);
 
             // Arrange
+            SetupRepositoryToUseInMemoryDb();
+
             MemberIsRegistered(memberId);
-            BookHasAvailableCopies(bookIsbn, availableCopies);
-            MemberHasNumberBorrowedBooks(memberId, currentBorrowedBooks);
+            await BookHasAvailableCopies(bookIsbn, availableCopies);
+            await MemberHasNumberBorrowedBooks(memberId, currentBorrowedBooks);
 
             // Act
             var bookCopyId = await BorrowBook(memberId, bookIsbn);
 
             // Assert
-            VerifyBookCopyIsInMemberBorrowedList(memberId, bookIsbn);
+            await VerifyBookCopyIsInMemberBorrowedList(memberId, bookCopyId);
+            await VerifyBorrowedBookByMemberSizeIs(1, memberId);
+            await VerifyNumberOfCopiesAvailableForBook(bookIsbn, numberOfAvailableCopies - 1);
         }
 
-
-        private void BookHasNoAvailableCopies(Guid bookIsbn)
+        private void SetupRepositoryToUseInMemoryDb()
         {
-            BookHasAvailableCopies(bookIsbn, new List<BookCopy>());
-        }
+            bookCopyRepository.Setup(m => m.UpdateBookCopy(It.IsAny<BookCopy>()))
+                .Callback<BookCopy>(bookCopy => { bookCopyMemoryDb.SaveBookCopy(bookCopy); })
+                .Returns(Task.CompletedTask);
+            bookCopyRepository.Setup(m => m.GetBorrowedBookCopiesByMember(It.IsAny<Guid>()))
+                .Returns<Guid>(memberId => Task.FromResult(bookCopyMemoryDb.GetBorrowedBookCopiesByMember(memberId)));
 
-        private void VerifyBookCopyIsInMemberBorrowedList(Guid memberId, Guid bookIsbn)
-        {
-            bookCopyRepository.Verify(
-                m => m.UpdateBookCopy(BookCopyBelongsToMember(memberId, bookIsbn)), Times.Once());
-            bookCopyRepository.Verify(m => m.Save(), Times.Once);
+            bookCopyRepository.Setup(m => m.GetAvailableCopiesByBookId(It.IsAny<Guid>()))
+                .Returns<Guid>(bookIsbn => Task.FromResult(bookCopyMemoryDb.GetAvailableCopiesByBookId(bookIsbn)));
         }
-
-        private static BookCopy BookCopyBelongsToMember(Guid memberId, Guid bookIsbn)
-        {
-            return It.Is<BookCopy>(b =>
-                memberId.Equals(b.BorrowedToMemberId) && bookIsbn.Equals(b.BookIsbn));
-        }
-
 
         private async Task<Guid> BorrowBook(Guid memberId, Guid bookIsbn)
         {
@@ -78,23 +74,47 @@ namespace BusinessLogic.Tests
             memberService.Setup(c => c.MemberIsRegistered(memberId)).ReturnsAsync(true);
         }
 
-        private void MemberIsNotRegistered(Guid memberId)
+
+        private async Task VerifyBorrowedBookByMemberSizeIs(int numberOfBooks, Guid memberId)
         {
-            memberService.Setup(c => c.MemberIsRegistered(memberId)).ReturnsAsync(false);
+            var borrowedBooks = await GetBorrowedBooksByMember(memberId);
+            Assert.Equal(numberOfBooks, borrowedBooks.Count);
         }
 
-        private void MemberHasNumberBorrowedBooks(Guid memberId, List<BookCopy> currentBorrowedBooks)
+        private async Task VerifyBookCopyIsInMemberBorrowedList(Guid memberId, Guid bookCopyId)
         {
-            bookCopyRepository.Setup(m => m.GetBorrowedBookCopiesByMember(memberId))
-                .ReturnsAsync(bookCopyMemoryDb.GetBorrowedBookCopiesByMember(memberId));
+            var borrowedBooks = await GetBorrowedBooksByMember(memberId);
+            Assert.Contains(borrowedBooks, b => b.Id.Equals(bookCopyId));
         }
 
-        private void BookHasAvailableCopies(Guid bookIsbn, List<BookCopy> availableBookCopies)
+        private async Task MemberHasNumberBorrowedBooks(Guid memberId, List<BookCopy> currentBorrowedBooks)
         {
-            foreach (var availableBookCopy in availableBookCopies) bookCopyMemoryDb.SaveBookCopy(availableBookCopy);
+            foreach (var bookCopy in currentBorrowedBooks)
+            {
+                bookCopy.LoanTo(memberId);
+                await bookCopyRepository.Object.UpdateBookCopy(bookCopy);
+            }
+        }
 
-            bookCopyRepository.Setup(m => m.GetAvailableCopiesByBookId(bookIsbn))
-                .ReturnsAsync(bookCopyMemoryDb.GetAvailableCopiesByBookId(bookIsbn));
+        private async Task BookHasAvailableCopies(Guid bookIsbn, List<BookCopy> availableBookCopies)
+        {
+            foreach (var bookCopy in availableBookCopies)
+            {
+                bookCopy.BookIsbn = bookIsbn;
+                await bookCopyRepository.Object.UpdateBookCopy(bookCopy);
+            }
+        }
+
+
+        private async Task VerifyNumberOfCopiesAvailableForBook(Guid bookIsbn, int numberOfAvailableCopies)
+        {
+            var availableCopiesByBookId = await bookCopyRepository.Object.GetAvailableCopiesByBookId(bookIsbn);
+            Assert.Equal(numberOfAvailableCopies, availableCopiesByBookId.Count);
+        }
+
+        private async Task<List<BookCopy>> GetBorrowedBooksByMember(Guid memberId)
+        {
+            return await borrowBookService.GetBorrowedBookCopiesByMember(memberId);
         }
 
         private Guid GenerateRandomBookIsbn()

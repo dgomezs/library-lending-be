@@ -111,19 +111,6 @@ namespace BusinessLogic.Tests
         }
 
 
-        private async Task VerifyBorrowedBookByMemberSizeIs(int numberOfBooks, Guid memberId)
-        {
-            var borrowedBooks = await GetBorrowedBooksByMember(memberId);
-            Assert.Equal(numberOfBooks, borrowedBooks.Count);
-        }
-
-        private async Task VerifyBookCopyIsInMemberBorrowedList(Guid memberId, Guid bookCopyId)
-        {
-            var borrowedBooks = await GetBorrowedBooksByMember(memberId);
-            Assert.Contains(borrowedBooks, b => b.Id.Equals(bookCopyId));
-        }
-
-
         private async Task<Guid> BorrowBook(Guid memberId, Guid bookIsbn)
         {
             return await borrowBookService.BorrowBook(memberId, bookIsbn);
@@ -138,6 +125,18 @@ namespace BusinessLogic.Tests
         private void MemberIsNotRegistered(Guid memberId)
         {
             memberService.Setup(c => c.MemberIsRegistered(memberId)).ReturnsAsync(false);
+        }
+
+        private async Task VerifyBorrowedBookByMemberSizeIs(int numberOfBooks, Guid memberId)
+        {
+            var borrowedBooks = await GetBorrowedBooksByMember(memberId);
+            Assert.Equal(numberOfBooks, borrowedBooks.Count);
+        }
+
+        private async Task VerifyBookCopyIsInMemberBorrowedList(Guid memberId, Guid bookCopyId)
+        {
+            var borrowedBooks = await GetBorrowedBooksByMember(memberId);
+            Assert.Contains(borrowedBooks, b => b.Id.Equals(bookCopyId));
         }
 
         private async Task MemberHasNumberBorrowedBooks(Guid memberId, List<BookCopy> currentBorrowedBooks)
@@ -162,16 +161,6 @@ namespace BusinessLogic.Tests
             await bookCopyRepository.Save();
         }
 
-        private Guid GenerateRandomBookIsbn()
-        {
-            return Guid.NewGuid();
-        }
-
-        private Guid GenerateRandomMemberId()
-        {
-            return Guid.NewGuid();
-        }
-
 
         private async Task VerifyNumberOfCopiesAvailableForBook(Guid bookIsbn, int numberOfAvailableCopies)
         {
@@ -182,6 +171,16 @@ namespace BusinessLogic.Tests
         private async Task<List<BookCopy>> GetBorrowedBooksByMember(Guid memberId)
         {
             return await borrowBookService.GetBorrowedBookCopiesByMember(memberId);
+        }
+
+        private Guid GenerateRandomBookIsbn()
+        {
+            return Guid.NewGuid();
+        }
+
+        private Guid GenerateRandomMemberId()
+        {
+            return Guid.NewGuid();
         }
     }
 }
