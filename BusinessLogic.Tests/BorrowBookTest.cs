@@ -6,7 +6,6 @@ using BusinessLayer.Exceptions;
 using BusinessLayer.Repositories;
 using BusinessLayer.Services;
 using BusinessLayer.Services.BorrowBook;
-using BusinessLayer.Services.Catalog;
 using BusinessLayer.Services.Member;
 using Microsoft.EntityFrameworkCore;
 using Moq;
@@ -18,7 +17,6 @@ namespace BusinessLogic.Tests
     {
         private readonly IBookCopyRepository bookCopyRepository;
         private readonly IBorrowBookService borrowBookService;
-        private readonly ICatalogService catalogService;
         private readonly Mock<IMemberService> memberService;
 
         public BorrowBookTest()
@@ -31,7 +29,6 @@ namespace BusinessLogic.Tests
             bookCopyRepository = new EfBookCopyRepository(libraryContext);
             memberService = new Mock<IMemberService>();
             borrowBookService = new BorrowBookService(memberService.Object, bookCopyRepository);
-            catalogService = new CatalogService(bookCopyRepository);
         }
 
         [Theory]
@@ -174,7 +171,7 @@ namespace BusinessLogic.Tests
 
         private async Task VerifyNumberOfCopiesAvailableForBook(Guid bookIsbn, int numberOfAvailableCopies)
         {
-            var availableCopiesByBookId = await catalogService.GetAvailableCopiesByBookId(bookIsbn);
+            var availableCopiesByBookId = await bookCopyRepository.GetAvailableCopiesByBookId(bookIsbn);
             Assert.Equal(numberOfAvailableCopies, availableCopiesByBookId.Count);
         }
 
