@@ -21,10 +21,14 @@ namespace BusinessLayer.Repositories
             return _libraryContext.BookCopies.Where(b => memberId.Equals(b.BorrowedToMemberId)).ToListAsync();
         }
 
-        public Task SaveBookCopy(BookCopy bookCopy)
+        public Task UpdateBookCopy(BookCopy bookCopy)
         {
             if (_libraryContext.Entry(bookCopy).State == EntityState.Detached) _libraryContext.BookCopies.Add(bookCopy);
+            return Task.CompletedTask;
+        }
 
+        public Task Save()
+        {
             return _libraryContext.SaveChangesAsync();
         }
 

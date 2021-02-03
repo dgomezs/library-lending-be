@@ -30,8 +30,8 @@ namespace BusinessLayer.Services.BorrowBook
 
             copyToBorrow.LoanTo(memberId);
 
-            await bookCopyRepository.SaveBookCopy(copyToBorrow);
-
+            await bookCopyRepository.UpdateBookCopy(copyToBorrow);
+            await bookCopyRepository.Save();
             return copyToBorrow.Id;
         }
 

@@ -17,13 +17,18 @@ namespace BusinessLogic.Tests
             return Task.FromResult(bookCopies);
         }
 
-        public Task SaveBookCopy(BookCopy bookCopy)
+        public Task UpdateBookCopy(BookCopy bookCopy)
         {
             var existsCopy = catalog.ContainsKey(bookCopy.Id);
 
             if (existsCopy) catalog.Remove(bookCopy.Id);
 
             catalog.Add(bookCopy.Id, bookCopy);
+            return Task.CompletedTask;
+        }
+
+        public Task Save()
+        {
             return Task.CompletedTask;
         }
 

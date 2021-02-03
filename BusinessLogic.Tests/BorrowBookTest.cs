@@ -25,8 +25,8 @@ namespace BusinessLogic.Tests
             builder.UseInMemoryDatabase("library");
             var libraryContext = new LibraryContext(builder.Options);
 
-            //bookCopyRepository = new FakeBookCopyRepository();
-            bookCopyRepository = new EfBookCopyRepository(libraryContext);
+            bookCopyRepository = new FakeBookCopyRepository();
+            //bookCopyRepository = new EfBookCopyRepository(libraryContext);
             memberService = new Mock<IMemberService>();
             borrowBookService = new BorrowBookService(memberService.Object, bookCopyRepository);
         }
@@ -145,8 +145,10 @@ namespace BusinessLogic.Tests
             foreach (var bookCopy in currentBorrowedBooks)
             {
                 bookCopy.LoanTo(memberId);
-                await bookCopyRepository.SaveBookCopy(bookCopy);
+                await bookCopyRepository.UpdateBookCopy(bookCopy);
             }
+
+            await bookCopyRepository.Save();
         }
 
         private async Task BookHasAvailableCopies(Guid bookIsbn, List<BookCopy> availableBookCopies)
@@ -154,8 +156,10 @@ namespace BusinessLogic.Tests
             foreach (var bookCopy in availableBookCopies)
             {
                 bookCopy.BookIsbn = bookIsbn;
-                await bookCopyRepository.SaveBookCopy(bookCopy);
+                await bookCopyRepository.UpdateBookCopy(bookCopy);
             }
+
+            await bookCopyRepository.Save();
         }
 
         private Guid GenerateRandomBookIsbn()
