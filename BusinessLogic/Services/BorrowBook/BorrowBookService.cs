@@ -6,18 +6,22 @@ using BusinessLayer.Entities;
 using BusinessLayer.Exceptions;
 using BusinessLayer.Repositories;
 using BusinessLayer.Services.Member;
+using Microsoft.Extensions.Logging;
 
 namespace BusinessLayer.Services.BorrowBook
 {
     public class BorrowBookService : IBorrowBookService
     {
         private readonly IBookCopyRepository bookCopyRepository;
+        private readonly ILogger<BorrowBookService> logger;
         private readonly IMemberService memberService;
 
-        public BorrowBookService(IMemberService memberService, IBookCopyRepository bookCopyRepository)
+        public BorrowBookService(ILogger<BorrowBookService> logger, IMemberService memberService,
+            IBookCopyRepository bookCopyRepository)
         {
             this.memberService = memberService;
             this.bookCopyRepository = bookCopyRepository;
+            this.logger = logger;
         }
 
         public async Task<Guid> BorrowBook(Guid memberId, Guid bookId)
@@ -53,8 +57,12 @@ namespace BusinessLayer.Services.BorrowBook
             var borrowedBooksByMember = await GetBorrowedBookCopiesByMember(memberId);
 
             if (borrowedBooksByMember.Count >= Constants.MaxBorrowedBooks)
+            {
+                logger.LogError("Member {MemberId} has borrowed more than {BorrowedBooks}", memberId,
+                    Constants.MaxBorrowedBooks);
                 throw new MaxBorrowedBooksExceededException(
                     $"Member ${memberId} has already borrowed ${Constants.MaxBorrowedBooks} books");
+            }
         }
 
         private BookCopy SelectCopyToBorrow(List<BookCopy> availableCopies)

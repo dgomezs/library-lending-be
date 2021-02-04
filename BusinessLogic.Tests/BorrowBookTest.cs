@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using BusinessLayer.Entities;
 using BusinessLayer.Exceptions;
@@ -17,6 +18,7 @@ namespace BusinessLogic.Tests
     {
         private readonly IBookCopyRepository bookCopyRepository;
         private readonly IBorrowBookService borrowBookService;
+        private readonly LoggerDouble<BorrowBookService> logger;
         private readonly Mock<IMemberService> memberService;
 
         public BorrowBookTest()
@@ -25,10 +27,11 @@ namespace BusinessLogic.Tests
             builder.UseInMemoryDatabase("library");
             var libraryContext = new LibraryContext(builder.Options);
 
+            logger = new LoggerDouble<BorrowBookService>();
             bookCopyRepository = new FakeBookCopyRepository();
             //bookCopyRepository = new EfBookCopyRepository(libraryContext);
             memberService = new Mock<IMemberService>();
-            borrowBookService = new BorrowBookService(memberService.Object, bookCopyRepository);
+            borrowBookService = new BorrowBookService(logger, memberService.Object, bookCopyRepository);
         }
 
         [Theory]
@@ -103,6 +106,29 @@ namespace BusinessLogic.Tests
 
             // Act
             await Assert.ThrowsAsync<NoAvailableBookCopiesException>(() => BorrowBook(memberId, bookIsbn));
+        }
+
+
+        [Fact]
+        public async Task ShouldLogAnErrorIfMemberHasMoreThanMaxNumberOfBorrowedBooks()
+        {
+            var memberId = GenerateRandomMemberId();
+            var bookIsbn = GenerateRandomBookIsbn();
+            var currentBorrowedBooks =
+                BookCopyMockData.GenerateRandomAvailableCopies(bookIsbn, Constants.MaxBorrowedBooks + 1);
+            var numberOfAvailableCopies = 2;
+            var availableCopies = BookCopyMockData.GenerateRandomAvailableCopies(bookIsbn, numberOfAvailableCopies);
+
+            // Arrange
+            MemberIsRegistered(memberId);
+            await BookHasAvailableCopies(bookIsbn, availableCopies);
+            await MemberHasNumberBorrowedBooks(memberId, currentBorrowedBooks);
+
+            // Act
+            await Assert.ThrowsAsync<MaxBorrowedBooksExceededException>(() => BorrowBook(memberId, bookIsbn));
+            var errorEntries = logger.ErrorEntries.ToList();
+            Assert.True(errorEntries.Count == 1);
+            var lastError = errorEntries[0];
         }
 
         private async Task BookHasNoAvailableCopies(Guid bookIsbn)

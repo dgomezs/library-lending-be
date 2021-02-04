@@ -5,6 +5,7 @@ using BusinessLayer.Entities;
 using BusinessLayer.Repositories;
 using BusinessLayer.Services.BorrowBook;
 using BusinessLayer.Services.Member;
+using Microsoft.Extensions.Logging;
 using Moq;
 using Xunit;
 
@@ -14,13 +15,15 @@ namespace BusinessLogic.Tests
     {
         private readonly Mock<IBookCopyRepository> bookCopyRepository;
         private readonly IBorrowBookService borrowBookService;
+        private readonly Mock<ILogger<BorrowBookService>> logger;
         private readonly Mock<IMemberService> memberService;
 
         public BorrowBookInteractionTest()
         {
             bookCopyRepository = new Mock<IBookCopyRepository>();
             memberService = new Mock<IMemberService>();
-            borrowBookService = new BorrowBookService(memberService.Object, bookCopyRepository.Object);
+            logger = new Mock<ILogger<BorrowBookService>>();
+            borrowBookService = new BorrowBookService(logger.Object, memberService.Object, bookCopyRepository.Object);
         }
 
         [Theory]
