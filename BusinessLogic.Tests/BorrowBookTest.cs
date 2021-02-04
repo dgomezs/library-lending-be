@@ -128,7 +128,6 @@ namespace BusinessLogic.Tests
             await Assert.ThrowsAsync<MaxBorrowedBooksExceededException>(() => BorrowBook(memberId, bookIsbn));
             var errorEntries = logger.ErrorEntries.ToList();
             Assert.True(errorEntries.Count == 1);
-            var lastError = errorEntries[0];
         }
 
         private async Task BookHasNoAvailableCopies(Guid bookIsbn)
